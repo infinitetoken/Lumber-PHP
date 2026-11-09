@@ -1,0 +1,9 @@
+# Left out of the archive Composer installs: the package is src/, config/ (Laravel's), composer.json, README and LICENSE
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/phpstan.neon.dist export-ignore
+/phpunit.xml.dist export-ignore
+/scripts export-ignore
+/tests export-ignore

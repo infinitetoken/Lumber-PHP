@@ -1,0 +1,10 @@
+# The shipped code at PHPStan's strictest level. The tests, which read decoded JSON throughout, are checked by running them.
+parameters:
+    level: max
+    paths:
+        - config
+        - scripts
+        - src
+    # Laravel's env(), for config/lumber.php
+    bootstrapFiles:
+        - vendor/laravel/framework/src/Illuminate/Foundation/helpers.php

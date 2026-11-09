@@ -1,0 +1,51 @@
+name: CI
+run-name: CI - ${{ github.event.pull_request.title || github.event.head_commit.message }}
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - run: composer update --no-interaction --no-progress
+      - run: composer lint
+      - run: composer analyse
+      # tests/contract must be Lumber-Kit's contract at the version in tests/contract/VERSION
+      - run: php scripts/sync-contract.php && git diff --exit-code tests/contract
+      # Packagist publishes each version tag: the tag must be Lumber::VERSION, which the User-Agent sends
+      - if: startsWith(github.ref, 'refs/tags/v')
+        run: test "v$(php -r 'require "vendor/autoload.php"; echo InfiniteToken\Lumber\Lumber::VERSION;')" = "$GITHUB_REF_NAME"
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Every PHP version still supported
+        php-version: ['8.2', '8.3', '8.4', '8.5']
+        dependencies: ['highest']
+        include:
+          # The oldest PHP with the oldest versions composer.json allows (psr/log 3.0, Monolog 3.0, Laravel 12)
+          - php-version: '8.2'
+            dependencies: 'lowest'
+    name: test (PHP ${{ matrix.php-version }}, ${{ matrix.dependencies }})
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, openssl
+          coverage: none
+      - run: composer update --no-interaction --no-progress ${{ matrix.dependencies == 'lowest' && '--prefer-lowest --prefer-stable' || '' }}
+      - run: vendor/bin/phpunit
