@@ -184,9 +184,9 @@ Finishing the response early writes a PHP session first (`session_write_close()`
 
 ## Delivery
 
-A network error or a 5xx counts as a failed attempt, and so does no answer within `timeout`: each log gets 5, waiting 1, 2, 4, then 8 seconds between them, and is then dropped with a warning. A log Lumber refuses (a 4xx, such as an invalid API key) is dropped at once with a warning, since sending it again won't help. When your team has sent its plan's logs for the month, Lumber answers 429: the client warns once and drops logs until the month turns.
+A network error or a 5xx counts as a failed attempt, and so does no answer within `timeout`: each log gets 5, waiting 1, 2, 4, then 8 seconds between them, and is then dropped with a warning. A log Lumber refuses (a 4xx, such as an invalid API key, or a 413 for a log over 16 KB once encrypted) is dropped at once with a warning, since sending it again won't help. Errors always get through: past your team's monthly logs, Lumber still takes error and fatal logs, and answers the rest 200 without keeping them, so the client carries on with no warning (the Lumber app shows when your team is at its limit). At twice your team's monthly logs Lumber answers 429: the client warns once and drops logs until the month turns.
 
-Every request starts afresh, so a request that finds Lumber unreachable, or at the monthly limit, leaves a note in the temp directory (named by a hash of your token), and the requests after it skip sending until it's over rather than each finding out for itself. While Lumber can't be reached, they hold off for 1 second, then 2, 4 and so on up to 30, until a log gets through. A Lumber outage costs your servers little, and never your visitors.
+Every request starts afresh, so a request that finds Lumber unreachable, or refusing logs for the month, leaves a note in the temp directory (named by a hash of your token), and the requests after it skip sending until it's over rather than each finding out for itself. While Lumber can't be reached, they hold off for 1 second, then 2, 4 and so on up to 30, until a log gets through. A Lumber outage costs your servers little, and never your visitors.
 
 Warnings go to PHP's error log (`error_log()`), never through a logger, where they'd be sent back to Lumber, unless you pass `warnings`.
 
